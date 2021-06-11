@@ -30,7 +30,7 @@ namespace ZooLab.BusinessLogic.Zoos
 
 		private Dictionary<TObject, List<TItem>> _data;
 		/// <summary>
-		/// Holds the non-empty desired result.
+		/// Holds the desired result (empty on the instance creation).
 		/// Cannot be null.
 		/// </summary>
 		public Dictionary<TObject, List<TItem>> Data
