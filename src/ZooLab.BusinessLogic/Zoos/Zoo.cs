@@ -198,7 +198,7 @@ namespace ZooLab.BusinessLogic.Zoos
 		}
 
 		private ResultItemListByObject<TEmployee, Animal> GetAnimalsForEmployeeAction<TEmployee>(
-			Func<Animal, bool> animalFilter = null, string failedFilterMessage = null)
+			Func<Animal, bool> animalFilter = null, string failedFilterMessage = "No animals that the action can be performed on.")
 			where TEmployee : IAnimalExperience
 		{
 			var result = new ResultItemListByObject<TEmployee, Animal>();
@@ -221,7 +221,7 @@ namespace ZooLab.BusinessLogic.Zoos
 					: allAnimals.Where(animalFilter).ToList();
 			if (animalsForAction.Count == 0)
 			{
-				result.ReasonEmpty = failedFilterMessage ?? "No animals that the action can be performed on.";
+				result.ReasonEmpty = failedFilterMessage;
 				return result;
 			}
 

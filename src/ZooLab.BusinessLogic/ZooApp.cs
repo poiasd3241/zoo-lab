@@ -91,7 +91,20 @@ namespace ZooLab
 			}
 
 			Zoos.Add(zoo);
+			_console?.WriteLine($"Added the zoo at '{zoo.Location}'.");
 		}
+
+		public static Animal GetAnimalByName(string animalName) => animalName switch
+		{
+			"Parrot" => new Parrot(),
+			"Penguin" => new Penguin(),
+			"Bison" => new Bison(),
+			"Elephant" => new Elephant(),
+			"Lion" => new Lion(),
+			"Snake" => new Snake(),
+			"Turtle" => new Turtle(),
+			_ => throw new NotImplementedException($"Unknown animal name: '{animalName}'.")
+		};
 
 		#endregion
 
@@ -166,17 +179,6 @@ namespace ZooLab
 			}
 			return result;
 		}
-
-		private static Animal GetAnimalByName(string animalName) => animalName switch
-		{
-			"Parrot" => new Parrot(),
-			"Penguin" => new Penguin(),
-			"Bison" => new Bison(),
-			"Elephant" => new Elephant(),
-			"Lion" => new Lion(),
-			"Snake" => new Snake(),
-			"Turtle" => new Turtle()
-		};
 
 		private string GetRandomFirstName() => _firstNames[_rnd.Next(_firstNames.Count)];
 		private string GetRandomLastName() => _lastNames[_rnd.Next(_lastNames.Count)];

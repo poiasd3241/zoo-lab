@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Xunit;
 using ZooLab.BusinessLogic.Logging;
 
 namespace ZooLab.BusinessLogic.Tests.Logging
@@ -19,6 +20,15 @@ namespace ZooLab.BusinessLogic.Tests.Logging
 		public void WriteLine(string text)
 		{
 			_currentOutputBuilder.Append($"{text}\n");
+		}
+
+		public class TestConsoleOrNull : TheoryData<TestConsole>
+		{
+			public TestConsoleOrNull()
+			{
+				Add(null);
+				Add(new TestConsole());
+			}
 		}
 	}
 }

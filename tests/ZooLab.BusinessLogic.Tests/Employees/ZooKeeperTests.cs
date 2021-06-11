@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Xunit;
+using ZooLab.BusinessLogic.Animals;
 using ZooLab.BusinessLogic.Animals.Mammals;
 using ZooLab.BusinessLogic.Employees;
 using ZooLab.BusinessLogic.Exceptions;
 using ZooLab.BusinessLogic.Tests.Animals;
 using ZooLab.BusinessLogic.Tests.Logging;
+using static ZooLab.BusinessLogic.Tests.Logging.TestConsole;
 
 namespace ZooLab.BusinessLogic.Tests.Employees
 {
@@ -28,39 +30,45 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 
 		#region Add Animal Experience
 
-		[Fact]
-		public void ShouldFailAddAnimalExperienceByAnimalNull()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailAddAnimalExperienceByAnimalNull(TestConsole console)
 		{
-			var console = new TestConsole();
 			ZooKeeper zooKeeper = new("a", "b", console);
 
 			var exception = Assert.Throws<ArgumentNullException>(() => zooKeeper.AddAnimalExperience(null));
 
 			Assert.Equal("animal", exception.ParamName);
 			Assert.Empty(zooKeeper.AnimalExperiences);
-			Assert.Equal("Cannot add an animal experience: the animal is not provided.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot add an animal experience: the animal is not provided.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailAddAnimalExperienceByAlreadyExperiencedWithAnimal()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailAddAnimalExperienceByAlreadyExperiencedWithAnimal(TestConsole console)
 		{
-			var console = new TestConsole();
 			ZooKeeper zooKeeper = new("a", "b", console);
 			var lion1 = new Lion();
 			var lion2 = new Lion();
 
 			zooKeeper.AddAnimalExperience(lion1);
-			console.Clear();
+			console?.Clear();
 			zooKeeper.AddAnimalExperience(lion2);
 
 			Assert.Equal(new List<string>() { "Lion" }, zooKeeper.AnimalExperiences);
-			Assert.Equal("ZooKeeper a b is already experienced with Lion.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("ZooKeeper a b is already experienced with Lion.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldAddAnimalExperience()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldAddAnimalExperience(TestConsole console)
 		{
-			var console = new TestConsole();
 			ZooKeeper zooKeeper = new("a", "b", console);
 			var lion = new Lion();
 
@@ -68,61 +76,82 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 
 			Assert.Equal(new List<string>() { "Lion" }, zooKeeper.AnimalExperiences);
 			Assert.True(zooKeeper.HasAnimalExperiece(new Lion()));
-			Assert.Equal("ZooKeeper a b is now experienced with Lion.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("ZooKeeper a b is now experienced with Lion.\n", console.CurrentOutput);
+			}
 		}
 
 		#endregion
 
 		#region Feed Animal
 
-		[Fact]
-		public void ShouldFailFeedAnimalByAnimalNull()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalByAnimalNull(TestConsole console)
 		{
-			var console = new TestConsole();
 			ZooKeeper zooKeeper = new("a", "b", console);
 
 			var exception = Assert.Throws<ArgumentNullException>(() => zooKeeper.FeedAnimal(null, DateTime.Now));
 
 			Assert.Equal("animal", exception.ParamName);
 			Assert.Empty(zooKeeper.AnimalExperiences);
-			Assert.Equal("Cannot feed an animal: the animal is not provided.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot feed an animal: the animal is not provided.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailFeedAnimalByNotExperiencedWithAnimal()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalByNotExperiencedWithAnimal(TestConsole console)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal();
 			ZooKeeper zooKeeper = new("a", "b", console);
 
 			var result = zooKeeper.FeedAnimal(animal, DateTime.Now);
 
 			Assert.False(result);
-			Assert.Equal("Cannot feed TestAnimal: no experience.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot feed TestAnimal: no experience.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailFeedAnimalByFeedScheduleNullOrEmpty()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalByFeedScheduleNullOrEmpty(TestConsole console)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal();
 			ZooKeeper zooKeeper = new("a", "b", console);
 			zooKeeper.AddAnimalExperience(animal);
-			console.Clear();
+			console?.Clear();
 
 			var exception = Assert.Throws<ArgumentInvalidPropertyException>(() => zooKeeper.FeedAnimal(animal, DateTime.Now));
 
 			Assert.Equal("animal", exception.ParamName);
 			Assert.Equal("FeedSchedule", exception.PropertyName);
-			Assert.Equal("Cannot feed TestAnimal #0: feed schedule is undefined or empty.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot feed TestAnimal #0: feed schedule is undefined or empty.\n", console.CurrentOutput);
+			}
+		}
+
+		public class FailFeedAnimalByFeedScheduleNotMatchingCurrentTimeWithTestConsole : TheoryData<TestConsole, int>
+		{
+			public FailFeedAnimalByFeedScheduleNotMatchingCurrentTimeWithTestConsole()
+			{
+				Add(null, 22);
+				Add(null, 3);
+				Add(new(), 22);
+				Add(new(), 3);
+			}
 		}
 
 		[Theory]
-		[InlineData(22)]
-		[InlineData(3)]
-		public void ShouldFailFeedAnimalByFeedScheduleNotMatchingCurrentTime(int feedScheduleHour)
+		[ClassData(typeof(FailFeedAnimalByFeedScheduleNotMatchingCurrentTimeWithTestConsole))]
+		public void ShouldFailFeedAnimalByFeedScheduleNotMatchingCurrentTime(TestConsole console, int feedScheduleHour)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal();
 			animal.AddFeedSchedule(new() { feedScheduleHour });
 			ZooKeeper zooKeeper = new("a", "b", console);
@@ -130,18 +159,21 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 			// Set the feeding time to 1 hour after the schedule.
 			var now = DateTime.Now.Date + new TimeSpan(feedScheduleHour + 1, 0, 0);
 
-			console.Clear();
+			console?.Clear();
 			var result = zooKeeper.FeedAnimal(animal, now);
 
 			Assert.False(result);
-			Assert.Equal($"Cannot feed TestAnimal #0 between {now.Hour}:00 and {now.AddHours(1).Hour}:00.\n",
+			if (console is not null)
+			{
+				Assert.Equal($"Cannot feed TestAnimal #0 between {now.Hour}:00 and {now.AddHours(1).Hour}:00.\n",
 				console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailFeedAnimalByDailyLimitZero()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalByDailyLimitZero(TestConsole console)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal();
 
 			ZooKeeper zooKeeper = new("a", "b", console);
@@ -150,7 +182,7 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 			animal.SetCustomMaxDailyFeedings(0);
 			animal.AddFeedSchedule(new() { 4 });
 			var now = GetNowWithHour(4);
-			console.Clear();
+			console?.Clear();
 
 			//When
 			var exception = Assert.Throws<ArgumentInvalidPropertyException>(
@@ -159,45 +191,52 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 			Assert.Equal("animal", exception.ParamName);
 			Assert.Equal("MaxDailyFeedings", exception.PropertyName);
 			Assert.Equal("MaxDailyFeedings: cannot be zero (Parameter 'animal')", exception.Message);
-			Assert.Empty(console.CurrentOutput);
-		}
-
-		[Fact]
-		public void ShouldFailFeedAnimalByDailyLimitExcess()
-		{
-			var console = new TestConsole();
-			var animal = new TestAnimal();
-
-			ZooKeeper zooKeeper = new("a", "b", console);
-			zooKeeper.AddAnimalExperience(animal);
-			var time = GetNowWithHour(2);
-			animal.SetCustomFeedTimes(new() { new(time, zooKeeper) });
-
-			animal.AddFeedSchedule(new() { 4 });
-			var now = GetNowWithHour(4);
-
-			console.Clear();
-			var result = zooKeeper.FeedAnimal(animal, now);
-
-			Assert.False(result);
-			Assert.Equal($"Cannot feed TestAnimal more than 1 time(s) in 24 hours.\n",
-				console.CurrentOutput);
-		}
-
-		public class FailFeedAnimalByFavoriteFoodNullOrEmpty : TheoryData<string[]>
-		{
-			public FailFeedAnimalByFavoriteFoodNullOrEmpty()
+			if (console is not null)
 			{
-				Add(null);
-				Add(Array.Empty<string>());
+				Assert.Empty(console.CurrentOutput);
 			}
 		}
 
 		[Theory]
-		[ClassData(typeof(FailFeedAnimalByFavoriteFoodNullOrEmpty))]
-		public void ShouldFailFeedAnimalByFavoriteFoodNullOrEmpty(string[] favoriteFood)
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalByDailyLimitExcess(TestConsole console)
 		{
-			var console = new TestConsole();
+			var animal = new TestAnimal();
+
+			ZooKeeper zooKeeper = new("a", "b", console);
+			zooKeeper.AddAnimalExperience(animal);
+			var timeToday = GetNowWithHour(2);
+			var timeYesterday = GetNowWithHour(2).AddDays(-1);
+			animal.SetCustomFeedTimes(new() { new(timeYesterday, zooKeeper), new(timeToday, zooKeeper) });
+
+			animal.AddFeedSchedule(new() { 4 });
+			var now = GetNowWithHour(4);
+
+			console?.Clear();
+			var result = zooKeeper.FeedAnimal(animal, now);
+
+			Assert.False(result);
+			if (console is not null)
+			{
+				Assert.Equal($"Cannot feed TestAnimal more than 1 time(s) in 24 hours.\n", console.CurrentOutput);
+			}
+		}
+
+		public class FailFeedAnimalByFavoriteFoodNullOrEmptyWithTestConsole : TheoryData<TestConsole, string[]>
+		{
+			public FailFeedAnimalByFavoriteFoodNullOrEmptyWithTestConsole()
+			{
+				Add(null, null);
+				Add(null, Array.Empty<string>());
+				Add(new(), null);
+				Add(new(), Array.Empty<string>());
+			}
+		}
+
+		[Theory]
+		[ClassData(typeof(FailFeedAnimalByFavoriteFoodNullOrEmptyWithTestConsole))]
+		public void ShouldFailFeedAnimalByFavoriteFoodNullOrEmpty(TestConsole console, string[] favoriteFood)
+		{
 			var animal = new TestAnimal();
 
 			ZooKeeper zooKeeper = new("a", "b", console);
@@ -206,7 +245,7 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 			animal.SetCustomFavoriteFood(favoriteFood);
 			animal.AddFeedSchedule(new() { 4 });
 			var now = GetNowWithHour(4);
-			console.Clear();
+			console?.Clear();
 
 			// When
 			var exception = Assert.Throws<ArgumentInvalidPropertyException>(
@@ -215,15 +254,16 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 			Assert.Equal("animal", exception.ParamName);
 			Assert.Equal("FavoriteFood", exception.PropertyName);
 			Assert.Equal("FavoriteFood: cannot be null or empty (Parameter 'animal')", exception.Message);
-			Assert.Equal($"Cannot feed TestAnimal #0: favorite food list is undefined or empty.\n",
-				console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal($"Cannot feed TestAnimal #0: favorite food list is undefined or empty.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailFeedAnimalByFavoriteFoodUnknown()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalByFavoriteFoodUnknown(TestConsole console)
 		{
-
-			var console = new TestConsole();
 			var animal = new TestAnimal();
 
 			ZooKeeper zooKeeper = new("a", "b", console);
@@ -234,31 +274,36 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 			animal.SetCustomFavoriteFood(new[] { unknownFoodName });
 			animal.AddFeedSchedule(new() { 4 });
 			var now = GetNowWithHour(4);
-			console.Clear();
+			console?.Clear();
 
 			// When
 			var exception = Assert.Throws<NotImplementedException>(
 				() => zooKeeper.FeedAnimal(animal, now));
 
 			Assert.Equal(expectedMessage, exception.Message);
-			Assert.Equal($"{expectedMessage}\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal($"{expectedMessage}\n", console.CurrentOutput);
+			}
 		}
 
-		public class FeedAnimalWithDifferentFood : TheoryData<string>
+		public class FeedAnimalWithDifferentFoodWithTestConsole : TheoryData<TestConsole, string>
 		{
-			public FeedAnimalWithDifferentFood()
+			public FeedAnimalWithDifferentFoodWithTestConsole()
 			{
-				Add("Grass");
-				Add("Vegetable");
-				Add("Meat");
+				Add(null, "Grass");
+				Add(null, "Vegetable");
+				Add(null, "Meat");
+				Add(new(), "Grass");
+				Add(new(), "Vegetable");
+				Add(new(), "Meat");
 			}
 		}
 
 		[Theory]
-		[ClassData(typeof(FeedAnimalWithDifferentFood))]
-		public void ShouldFeedAnimal(string foodName)
+		[ClassData(typeof(FeedAnimalWithDifferentFoodWithTestConsole))]
+		public void ShouldFeedAnimal(TestConsole console, string foodName)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal();
 
 			ZooKeeper zooKeeper = new("a", "b", console);
@@ -267,13 +312,16 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 			animal.SetCustomFavoriteFood(new[] { foodName });
 			animal.AddFeedSchedule(new() { 4 });
 			var now = GetNowWithHour(4);
-			console.Clear();
+			console?.Clear();
 
 			// When
 			var result = zooKeeper.FeedAnimal(animal, now);
 
 			Assert.True(result);
-			Assert.Equal($"ZooKeeper a b fed TestAnimal #0 with {foodName}.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal($"ZooKeeper a b fed TestAnimal #0 with {foodName}.\n", console.CurrentOutput);
+			}
 		}
 
 		#endregion

@@ -31,7 +31,6 @@ namespace ZooLab.BusinessLogic.Zoos
 
 		#endregion
 
-
 		#region Constructor
 
 		public Enclosure(string name, Zoo parentZoo, int squareFeet, IConsole console = null)

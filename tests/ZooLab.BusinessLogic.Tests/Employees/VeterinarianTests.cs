@@ -6,6 +6,7 @@ using ZooLab.BusinessLogic.Animals.Mammals;
 using ZooLab.BusinessLogic.Employees;
 using ZooLab.BusinessLogic.Tests.Animals;
 using ZooLab.BusinessLogic.Tests.Logging;
+using static ZooLab.BusinessLogic.Tests.Logging.TestConsole;
 
 namespace ZooLab.BusinessLogic.Tests.Employees
 {
@@ -28,39 +29,45 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 
 		#region Add Animal Experience
 
-		[Fact]
-		public void ShouldFailAddAnimalExperienceByAnimalNull()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailAddAnimalExperienceByAnimalNull(TestConsole console)
 		{
-			var console = new TestConsole();
 			Veterinarian veterinarian = new("a", "b", console);
 
 			var exception = Assert.Throws<ArgumentNullException>(() => veterinarian.AddAnimalExperience(null));
 
 			Assert.Equal("animal", exception.ParamName);
 			Assert.Empty(veterinarian.AnimalExperiences);
-			Assert.Equal("Cannot add an animal experience: the animal is not provided.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot add an animal experience: the animal is not provided.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailAddAnimalExperienceByAlreadyExperiencedWithAnimal()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailAddAnimalExperienceByAlreadyExperiencedWithAnimal(TestConsole console)
 		{
-			var console = new TestConsole();
 			Veterinarian veterinarian = new("a", "b", console);
 			var lion1 = new Lion();
 			var lion2 = new Lion();
 
 			veterinarian.AddAnimalExperience(lion1);
-			console.Clear();
+			console?.Clear();
 			veterinarian.AddAnimalExperience(lion2);
 
 			Assert.Equal(new List<string>() { "Lion" }, veterinarian.AnimalExperiences);
-			Assert.Equal("Veterinarian a b is already experienced with Lion.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Veterinarian a b is already experienced with Lion.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldAddAnimalExperience()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldAddAnimalExperience(TestConsole console)
 		{
-			var console = new TestConsole();
 			Veterinarian veterinarian = new("a", "b", console);
 			var lion = new Lion();
 
@@ -68,56 +75,68 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 
 			Assert.Equal(new List<string>() { "Lion" }, veterinarian.AnimalExperiences);
 			Assert.True(veterinarian.HasAnimalExperiece(new Lion()));
-			Assert.Equal("Veterinarian a b is now experienced with Lion.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Veterinarian a b is now experienced with Lion.\n", console.CurrentOutput);
+			}
 		}
 
 		#endregion
 
 		#region Heal Animal
 
-		[Fact]
-		public void ShouldFailHealAnimalByAnimalNull()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHealAnimalByAnimalNull(TestConsole console)
 		{
-			var console = new TestConsole();
 			Veterinarian veterinarian = new("a", "b", console);
 
 			var exception = Assert.Throws<ArgumentNullException>(() => veterinarian.HealAnimal(null));
 
 			Assert.Equal("animal", exception.ParamName);
 			Assert.Empty(veterinarian.AnimalExperiences);
-			Assert.Equal("Cannot heal an animal: the animal is not provided.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot heal an animal: the animal is not provided.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailHealAnimalByAnimalHealthy()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHealAnimalByAnimalHealthy(TestConsole console)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal(Animal.SicknessType.None, console);
 			Veterinarian veterinarian = new("a", "b", console);
 
 			var result = veterinarian.HealAnimal(animal);
 
 			Assert.False(result);
-			Assert.Equal("The animal is healthy and doesn't need healing.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("The animal is healthy and doesn't need healing.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailHealAnimalByNotExperiencedWithAnimal()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHealAnimalByNotExperiencedWithAnimal(TestConsole console)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal(Animal.SicknessType.Inflammation, console);
 			Veterinarian veterinarian = new("a", "b", console);
 
 			var result = veterinarian.HealAnimal(animal);
 
 			Assert.False(result);
-			Assert.Equal("Cannot heal TestAnimal: no experience.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot heal TestAnimal: no experience.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailHealAnimalByAnimalSicknessUnknown()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHealAnimalByAnimalSicknessUnknown(TestConsole console)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal();
 			var unknownSickness = (Animal.SicknessType)123;
 			animal.SetCustomSickness(unknownSickness);
@@ -125,39 +144,46 @@ namespace ZooLab.BusinessLogic.Tests.Employees
 			veterinarian.AddAnimalExperience(animal);
 			var expectedMessage = "Unknown sickness: '123'.";
 
-			console.Clear();
+			console?.Clear();
 			var exception = Assert.Throws<NotImplementedException>(() => veterinarian.HealAnimal(animal));
 
 			Assert.Equal(expectedMessage, exception.Message);
-			Assert.Equal($"{expectedMessage}\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal($"{expectedMessage}\n", console.CurrentOutput);
+			}
 		}
 
-		public class HealAnimalWithDifferentSicknesses : TheoryData<Animal.SicknessType, string>
+		public class HealAnimalWithDifferentSicknessesWithTestConsole : TheoryData<TestConsole, Animal.SicknessType, string>
 		{
-			public HealAnimalWithDifferentSicknesses()
+			public HealAnimalWithDifferentSicknessesWithTestConsole()
 			{
-				Add(Animal.SicknessType.Infection, "Antibiotics");
-				Add(Animal.SicknessType.Inflammation, "AntiInflammatory");
-				Add(Animal.SicknessType.Depression, "AntiDepression");
+				Add(null, Animal.SicknessType.Infection, "Antibiotics");
+				Add(null, Animal.SicknessType.Inflammation, "AntiInflammatory");
+				Add(null, Animal.SicknessType.Depression, "AntiDepression");
+				Add(new(), Animal.SicknessType.Infection, "Antibiotics");
+				Add(new(), Animal.SicknessType.Inflammation, "AntiInflammatory");
+				Add(new(), Animal.SicknessType.Depression, "AntiDepression");
 			}
 		}
 
 		[Theory]
-		[ClassData(typeof(HealAnimalWithDifferentSicknesses))]
-		public void ShouldHealAnimal(Animal.SicknessType sickness, string medicineName)
+		[ClassData(typeof(HealAnimalWithDifferentSicknessesWithTestConsole))]
+		public void ShouldHealAnimal(TestConsole console, Animal.SicknessType sickness, string medicineName)
 		{
-			var console = new TestConsole();
 			var animal = new TestAnimal();
 			animal.SetCustomSickness(sickness);
 			Veterinarian veterinarian = new("a", "b", console);
 			veterinarian.AddAnimalExperience(animal);
 
-			console.Clear();
+			console?.Clear();
 			var result = veterinarian.HealAnimal(animal);
 
 			Assert.True(result);
-			Assert.Equal($"Veterinarian a b healed TestAnimal #0 with {medicineName}.\n",
-				console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal($"Veterinarian a b healed TestAnimal #0 with {medicineName}.\n", console.CurrentOutput);
+			}
 		}
 
 		#endregion

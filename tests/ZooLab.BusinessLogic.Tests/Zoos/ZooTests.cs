@@ -9,6 +9,7 @@ using ZooLab.BusinessLogic.Exceptions;
 using ZooLab.BusinessLogic.Tests.Animals;
 using ZooLab.BusinessLogic.Tests.Logging;
 using ZooLab.BusinessLogic.Zoos;
+using static ZooLab.BusinessLogic.Tests.Logging.TestConsole;
 
 namespace ZooLab.BusinessLogic.Tests.Zoos
 {
@@ -29,13 +30,23 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 
 		#region Add Enclosure
 
-		[Theory]
-		[InlineData(null)]
-		[InlineData("")]
-		[InlineData(" ")]
-		public void ShouldFailAddEnclosureByNameNullOrWhitespace(string enclosureName)
+		public class FailAddEnclosureByNameNullOrWhitespaceWithTestConsole : TheoryData<TestConsole, string>
 		{
-			var console = new TestConsole();
+			public FailAddEnclosureByNameNullOrWhitespaceWithTestConsole()
+			{
+				Add(null, null);
+				Add(null, "");
+				Add(null, " ");
+				Add(new(), null);
+				Add(new(), "");
+				Add(new(), " ");
+			}
+		}
+
+		[Theory]
+		[ClassData(typeof(FailAddEnclosureByNameNullOrWhitespaceWithTestConsole))]
+		public void ShouldFailAddEnclosureByNameNullOrWhitespace(TestConsole console, string enclosureName)
+		{
 			var zoo = new Zoo("x", console);
 
 			var exception = Assert.Throws<ArgumentException>(() => zoo.AddEnclosure(enclosureName, 123));
@@ -43,16 +54,19 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			Assert.Equal("name", exception.ParamName);
 			Assert.Equal("Cannot be null or whitespace (Parameter 'name')", exception.Message);
 			Assert.Empty(zoo.Enclosures);
-			Assert.Equal("Cannot add an enclosure: the name cannot be a null or whitespace.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot add an enclosure: the name cannot be a null or whitespace.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailAddEnclosureByNameTaken()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailAddEnclosureByNameTaken(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("first", 123);
-			console.Clear();
+			console?.Clear();
 
 			var exception = Assert.Throws<ArgumentException>(() => zoo.AddEnclosure("first", 222));
 
@@ -60,15 +74,27 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			Assert.Equal("Already taken (Parameter 'name')", exception.Message);
 			var first = Assert.Single(zoo.Enclosures);
 			Assert.Equal(123, first.SquareFeet);
-			Assert.Equal("Cannot add an enclosure: the name is taken.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot add an enclosure: the name is taken.\n", console.CurrentOutput);
+			}
+		}
+
+		public class FailAddEnclosureBySquareFeetInvalidWithTestConsole : TheoryData<TestConsole, int>
+		{
+			public FailAddEnclosureBySquareFeetInvalidWithTestConsole()
+			{
+				Add(null, -1);
+				Add(null, 0);
+				Add(new(), -1);
+				Add(new(), 0);
+			}
 		}
 
 		[Theory]
-		[InlineData(-1)]
-		[InlineData(0)]
-		public void ShouldFailAddEnclosureBySquareFeetInvalid(int squareFeet)
+		[ClassData(typeof(FailAddEnclosureBySquareFeetInvalidWithTestConsole))]
+		public void ShouldFailAddEnclosureBySquareFeetInvalid(TestConsole console, int squareFeet)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 
 			var exception = Assert.Throws<ArgumentException>(() => zoo.AddEnclosure("name", squareFeet));
@@ -76,13 +102,16 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			Assert.Equal("squareFeet", exception.ParamName);
 			Assert.Equal("Must be greater than 0 (Parameter 'squareFeet')", exception.Message);
 			Assert.Empty(zoo.Enclosures);
-			Assert.Equal("Cannot add an enclosure: the area (sq. ft) must be greater than 0.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot add an enclosure: the area (sq. ft) must be greater than 0.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldAddEnclosure()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldAddEnclosure(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 
 			zoo.AddEnclosure("name", 123);
@@ -92,74 +121,89 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			Assert.Equal("name", enclosure.Name);
 			Assert.Equal(123, enclosure.SquareFeet);
 			Assert.Equal(zoo, enclosure.ParentZoo);
-			Assert.Equal("Added an enclosure 'name', 123 sq. ft.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Added an enclosure 'name', 123 sq. ft.\n", console.CurrentOutput);
+			}
 		}
 
 		#endregion
 
 		#region Find Available Enclosure
 
-		[Fact]
-		public void ShouldFailFindAvailableEnclosureByAnimalNull()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFindAvailableEnclosureByAnimalNull(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 
 			var exception = Assert.Throws<ArgumentNullException>(() => zoo.FindAvailableEnclosure(null));
 
 			Assert.Equal("animal", exception.ParamName);
-			Assert.Equal("Cannot find an enclosure: the animal is not provided.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot find an enclosure: the animal is not provided.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailFindAvailableEnclosureByEnclosuresEmpty()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFindAvailableEnclosureByEnclosuresEmpty(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 
 			Assert.Throws<NoAvailableEnclosureException>(() => zoo.FindAvailableEnclosure(new TestAnimal()));
 
-			Assert.Equal("No available enclosures for the TestAnimal.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("No available enclosures for the TestAnimal.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailFindAvailableEnclosureByCannotAddAnimal()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFindAvailableEnclosureByCannotAddAnimal(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 
 			// Animal requires more space than the enclosure can offer.
 			zoo.AddEnclosure("enc", 200);
 			var animal = new TestAnimal();
 			animal.SetCustomRequiredSpaceSqFt(999);
-			console.Clear();
+			console?.Clear();
 
 			Assert.Throws<NoAvailableEnclosureException>(() => zoo.FindAvailableEnclosure(animal));
 
-			Assert.Equal("No available enclosures for the TestAnimal.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("No available enclosures for the TestAnimal.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFindAvailableEnclosureSingleOption()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFindAvailableEnclosureSingleOption(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 
 			zoo.AddEnclosure("enc", 200);
 			var animal = new TestAnimal();
-			console.Clear();
+			console?.Clear();
 
 			var suitableEnclosure = zoo.FindAvailableEnclosure(animal);
 
 			Assert.Equal(zoo.Enclosures[0], suitableEnclosure);
-			Assert.Equal("Found a suitable enclosure 'enc' for TestAnimal. " +
-				"This is the only suitable enclosure.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Found a suitable enclosure 'enc' for TestAnimal. " +
+					"This is the only suitable enclosure.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFindAvailableEnclosureMultipleOptions()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFindAvailableEnclosureMultipleOptions(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 
 			var animal1 = new TestAnimal();
@@ -169,79 +213,94 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			zoo.AddEnclosure("enc2", 200);
 			zoo.Enclosures[0].AddAnimal(animal1);
 			zoo.Enclosures[1].AddAnimal(animal2);
-			console.Clear();
+			console?.Clear();
 
 			var suitableEnclosure = zoo.FindAvailableEnclosure(animal3);
 
 			// Picked the enclosure with more free space.
 			Assert.Equal(zoo.Enclosures[1], suitableEnclosure);
-			Assert.Equal("Found a suitable enclosure 'enc2' for TestAnimal. " +
-				"Of all suitable enclosures, this one has the most free space at 199 sq. ft.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Found a suitable enclosure 'enc2' for TestAnimal. " +
+					"Of all suitable enclosures, this one has the most free space at 199 sq. ft.\n",
+					console.CurrentOutput);
+			}
 		}
 
 		#endregion
 
 		#region Hire Employee
 
-		[Fact]
-		public void ShouldFailHireEmployeeByEmployeeNull()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHireEmployeeByEmployeeNull(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 
 			var exception = Assert.Throws<ArgumentNullException>(() => zoo.HireEmployee(null));
 
 			Assert.Equal("employee", exception.ParamName);
 			Assert.Empty(zoo.Employees);
-			Assert.Equal("Cannot hire an employee: the employee is not provided.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Cannot hire an employee: the employee is not provided.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailHireEmployeeByEmployeeLackOfAnimalExperience()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHireEmployeeByEmployeeLackOfAnimalExperience(TestConsole console)
 		{
-			var zoo = new Zoo("x");
+			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			zoo.Enclosures[0].AddAnimal(new TestAnimal());
 
 			var zooKeeper = new ZooKeeper("a", "b");
 			zooKeeper.AddAnimalExperience(new Lion());
+			console?.Clear();
 
 			var exception = Assert.Throws<NoNeededExperienceException>(() => zoo.HireEmployee(zooKeeper));
 
 			Assert.Equal("ZooKeeper a b doesn't have experience with the following animals: TestAnimal.", exception.Message);
 			Assert.Empty(zoo.Employees);
+			if (console is not null)
+			{
+				Assert.Equal("ZooKeeper a b doesn't have experience with the following animals: TestAnimal.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailHireEmployeeByEmployeeNonAnimalExperienceValidation()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHireEmployeeByEmployeeNonAnimalExperienceValidation(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			zoo.Enclosures[0].AddAnimal(new TestAnimal());
 
 			var zooKeeper = new ZooKeeper("a", "");
 			zooKeeper.AddAnimalExperience(new TestAnimal());
-			console.Clear();
+			console?.Clear();
 
 			zoo.HireEmployee(zooKeeper);
 
 			Assert.Empty(zoo.Employees);
-			Assert.Equal("The ZooKeeper a  cannot be hired:\n" +
-				"LastName: Last name is required.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("The ZooKeeper a  cannot be hired:\n" + "LastName: Last name is required.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldHireEmployee()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldHireEmployee(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			zoo.Enclosures[0].AddAnimal(new TestAnimal());
 
 			var zooKeeper = new ZooKeeper("a", "b");
 			zooKeeper.AddAnimalExperience(new TestAnimal());
-			console.Clear();
+			console?.Clear();
 
 			zoo.HireEmployee(zooKeeper);
 
@@ -250,44 +309,53 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			Assert.Equal("a", hiredEmployee.FirstName);
 			Assert.Equal("b", hiredEmployee.LastName);
 			Assert.True(hiredEmployee is ZooKeeper);
-			Assert.Equal("Hired an employee: ZooKeeper a b.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Hired an employee: ZooKeeper a b.\n", console.CurrentOutput);
+			}
 		}
 
 		#endregion
 
 		#region Feed Animals
 
-		[Fact]
-		public void ShouldFailFeedAnimalsByAnimalsEmpty()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalsByAnimalsEmpty(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.FeedAnimals(DateTime.Now);
 
-			Assert.Equal("No animals in the zoo.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("No animals in the zoo.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailFeedAnimalsByZooKeepersEmpty()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalsByZooKeepersEmpty(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			zoo.Enclosures[0].AddAnimal(new TestAnimal());
 			var vet = new Veterinarian("a", "b");
 			vet.AddAnimalExperience(new TestAnimal());
 			zoo.HireEmployee(vet);
-			console.Clear();
+			console?.Clear();
 
 			zoo.FeedAnimals(DateTime.Now);
 
-			Assert.Equal("No ZooKeeper employees in the zoo.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("No ZooKeeper employees in the zoo.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailFeedAnimalsByZooKeepersNoExperience()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailFeedAnimalsByZooKeepersNoExperience(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			zoo.Enclosures[0].AddAnimal(new Parrot());
@@ -298,18 +366,20 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			zoo.Enclosures[0].AddAnimal(new Turtle());
 			zoo.Enclosures[0].RemoveAnimal(0);
 
-			console.Clear();
+			console?.Clear();
 
 			zoo.FeedAnimals(DateTime.Now);
 
-			Assert.Equal("No employees are experienced with the animals that need the action to be performed on.\n",
-				console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("No employees are experienced with the animals that need the action to be performed on.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFeedAnimals()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFeedAnimals(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			var now = DateTime.Now;
@@ -327,64 +397,76 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			zoo.HireEmployee(zooKeeperParrots1);
 			zoo.HireEmployee(zooKeeperParrots2);
 
-			console.Clear();
+			console?.Clear();
 
 			zoo.FeedAnimals(now);
 
-			Assert.Equal(
+			if (console is not null)
+			{
+				Assert.Equal(
 				"Zoo keeper Parrot Pro fed 1 animal(s) #(0).\n" +
 				"Zoo keeper Parrot Guru fed 1 animal(s) #(1).\n" +
 				"", console.CurrentOutput);
+			}
 		}
 
 		#endregion
 
 		#region Heal Animals
 
-		[Fact]
-		public void ShouldFailHealAnimalsByAnimalsEmpty()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHealAnimalsByAnimalsEmpty(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.HealAnimals();
 
-			Assert.Equal("No animals in the zoo.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("No animals in the zoo.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailHealAnimalsByAnimalsHealthy()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHealAnimalsByAnimalsHealthy(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			var healthyAnimal = new TestAnimal(Animal.SicknessType.None);
 			zoo.Enclosures[0].AddAnimal(healthyAnimal);
-			console.Clear();
+			console?.Clear();
 
 			zoo.HealAnimals();
 
-			Assert.Equal("No animals need healing.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("No animals need healing.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailHealAnimalsByVeterinariansEmpty()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHealAnimalsByVeterinariansEmpty(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			var sickAnimal = new TestAnimal(Animal.SicknessType.Infection);
 			zoo.Enclosures[0].AddAnimal(sickAnimal);
-			console.Clear();
+			console?.Clear();
 
 			zoo.HealAnimals();
 
-			Assert.Equal("No Veterinarian employees in the zoo.\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("No Veterinarian employees in the zoo.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailHealAnimalsByVeterinariansNoExperience()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailHealAnimalsByVeterinariansNoExperience(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 
@@ -402,18 +484,21 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			zoo.Enclosures[0].AddAnimal(sickTurtle);
 			zoo.Enclosures[0].RemoveAnimal(0);
 
-			console.Clear();
+			console?.Clear();
 
 			zoo.HealAnimals();
 
-			Assert.Equal("No employees are experienced with the animals that need the action to be performed on.\n",
+			if (console is not null)
+			{
+				Assert.Equal("No employees are experienced with the animals that need the action to be performed on.\n",
 				console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldHealAnimals()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldHealAnimals(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zoo = new Zoo("x", console);
 			zoo.AddEnclosure("enc", 999);
 			var now = DateTime.Now;
@@ -428,11 +513,14 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			vetTestAnimals.AddAnimalExperience(new TestAnimal());
 			zoo.HireEmployee(vetTestAnimals);
 
-			console.Clear();
+			console?.Clear();
 
 			zoo.HealAnimals();
 
-			Assert.Equal("Veterinarian a b healed 2 animal(s) #(0, 1).\n", console.CurrentOutput);
+			if (console is not null)
+			{
+				Assert.Equal("Veterinarian a b healed 2 animal(s) #(0, 1).\n", console.CurrentOutput);
+			}
 		}
 
 		#endregion

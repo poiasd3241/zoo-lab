@@ -1,8 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Xunit;
+using ZooLab.BusinessLogic.Animals;
+using ZooLab.BusinessLogic.Animals.Birds;
+using ZooLab.BusinessLogic.Animals.Mammals;
+using ZooLab.BusinessLogic.Animals.Reptiles;
 using ZooLab.BusinessLogic.Tests.Logging;
 using ZooLab.BusinessLogic.Zoos;
+using static ZooLab.BusinessLogic.Tests.Logging.TestConsole;
 
 namespace ZooLab.BusinessLogic.Tests.Zoos
 {
@@ -47,47 +52,101 @@ namespace ZooLab.BusinessLogic.Tests.Zoos
 			}
 		}
 
+		#region Get Animal By Name
+
 		[Fact]
-		public void ShouldFailAddZooByZooNull()
+		public void ShouldFailGetAnimalByNameUnknown()
 		{
-			var console = new TestConsole();
+			var exception = Assert.Throws<NotImplementedException>(() => ZooApp.GetAnimalByName("z"));
+
+			Assert.Equal("Unknown animal name: 'z'.", exception.Message);
+		}
+
+		public class GetAnimalByName : TheoryData<string, Type>
+		{
+			public GetAnimalByName()
+			{
+				Add("Parrot", typeof(Parrot));
+				Add("Penguin", typeof(Penguin));
+				Add("Bison", typeof(Bison));
+				Add("Elephant", typeof(Elephant));
+				Add("Lion", typeof(Lion));
+				Add("Snake", typeof(Snake));
+				Add("Turtle", typeof(Turtle));
+			}
+		}
+
+		[Theory]
+		[ClassData(typeof(GetAnimalByName))]
+		public void ShouldGetAnimalByName(string animalName, Type animalType)
+		{
+			var actualAnimal = ZooApp.GetAnimalByName(animalName);
+
+			Assert.Equal(animalType, actualAnimal.GetType());
+		}
+
+		#endregion
+
+		#region Add Zoo
+
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailAddZooByZooNull(TestConsole console)
+		{
 			var zooApp = new ZooApp(console);
-			console.Clear();
+			console?.Clear();
 
 			var exception = Assert.Throws<ArgumentNullException>(() => zooApp.AddZoo(null));
 
 			Assert.Equal("zoo", exception.ParamName);
-			Assert.Equal("Cannot add a zoo: the zoo is not provided.\n", console.CurrentOutput);
+			Assert.Equal(2, zooApp.Zoos.Count);
+
+			if (console is not null)
+			{
+				Assert.Equal("Cannot add a zoo: the zoo is not provided.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldFailAddZooByZooLocationTaken()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldFailAddZooByZooLocationTaken(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zooApp = new ZooApp(console);
 			var zoo1 = new Zoo("x");
 			var zoo2 = new Zoo("x");
 			zooApp.AddZoo(zoo1);
-			console.Clear();
+			console?.Clear();
 
 			var exception = Assert.Throws<ArgumentException>(() => zooApp.AddZoo(zoo2));
 
 			Assert.Equal("zoo", exception.ParamName);
 			Assert.Equal("Already taken (Parameter 'zoo')", exception.Message);
-			Assert.Equal("Cannot add a zoo: the location is taken.\n", console.CurrentOutput);
+			Assert.Equal(3, zooApp.Zoos.Count);
+
+			if (console is not null)
+			{
+				Assert.Equal("Cannot add a zoo: the location is taken.\n", console.CurrentOutput);
+			}
 		}
 
-		[Fact]
-		public void ShouldAddZoo()
+		[Theory]
+		[ClassData(typeof(TestConsoleOrNull))]
+		public void ShouldAddZoo(TestConsole console)
 		{
-			var console = new TestConsole();
 			var zooApp = new ZooApp(console);
 			var zoo1 = new Zoo("x");
-			console.Clear();
+			console?.Clear();
 
 			zooApp.AddZoo(zoo1);
 
-			Assert.Equal(zoo1, zooApp.Zoos[2]);
+			Assert.Equal(3, zooApp.Zoos.Count);
+
+			if (console is not null)
+			{
+				Assert.Equal(zoo1, zooApp.Zoos[2]);
+			}
 		}
+
+		#endregion
 	}
 }
